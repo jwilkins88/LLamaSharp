@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.MemoryMappedFiles;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -159,6 +160,9 @@ namespace LLama
                 }
             }
 
+            // Restrict file permissions to owner-only (rw-------) on Unix
+            RestrictFilePermissions(filename);
+
             Debug.Assert(stateSize == writtenBytes, $"Expected to write {stateSize} bytes, but actually wrote {writtenBytes}");
         }
 
@@ -195,6 +199,9 @@ namespace LLama
                     }
                 }
             }
+
+            // Restrict file permissions to owner-only (rw-------) on Unix
+            RestrictFilePermissions(filename);
 
             Debug.Assert(stateSize == writtenBytes, $"Expected to write {stateSize} bytes, but actually wrote {writtenBytes}");
         }
@@ -445,6 +452,19 @@ namespace LLama
         }
 
         /// <summary>
+        /// Restrict file permissions to owner read/write only on supported platforms.
+        /// </summary>
+        private static void RestrictFilePermissions(string filename)
+        {
+#if NET7_0_OR_GREATER
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                File.SetUnixFileMode(filename, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+            }
+#endif
+        }
+
+        /// <summary>
         /// The state of this context, which can be reloaded later
         /// </summary>
         public class State
@@ -464,6 +484,11 @@ namespace LLama
             /// <inheritdoc />
             protected override bool ReleaseHandle()
             {
+                // Zero sensitive state data before releasing memory
+                unsafe
+                {
+                    new Span<byte>((void*)handle, (int)Size).Clear();
+                }
                 Marshal.FreeHGlobal(handle);
                 return true;
             }
@@ -562,6 +587,11 @@ namespace LLama
             /// <inheritdoc />
             protected override bool ReleaseHandle()
             {
+                // Zero sensitive state data before releasing memory
+                unsafe
+                {
+                    new Span<byte>((void*)handle, (int)_size).Clear();
+                }
                 Marshal.FreeHGlobal(handle);
                 return true;
             }

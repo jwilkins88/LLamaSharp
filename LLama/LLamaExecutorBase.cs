@@ -79,9 +79,9 @@ namespace LLama
                 return ClipModel != null;
             }
         }
-        
+
         /// <inheritdoc />
-        public MtmdWeights? ClipModel { get;  }
+        public MtmdWeights? ClipModel { get; }
 
         /// <inheritdoc />
         public List<SafeMtmdEmbed> Embeds { get; }
@@ -112,15 +112,15 @@ namespace LLama
             _decoder = new StreamingTokenDecoder(context);
             AntipromptProcessor = new AntipromptProcessor();
         }
-        
+
         /// <summary>
         /// Initialize a multimodal executor with the supplied MTMD weights.
         /// </summary>
         /// <param name="context">LLama context used for all native interactions.</param>
         /// <param name="mtmdWeights">Multimodal weights to associate with this executor.</param>
         /// <param name="logger">Optional logger for diagnostic output.</param>
-        public StatefulExecutorBase(LLamaContext context, MtmdWeights mtmdWeights, ILogger? logger = null) : 
-                        this( context, logger )
+        public StatefulExecutorBase(LLamaContext context, MtmdWeights mtmdWeights, ILogger? logger = null) :
+                        this(context, logger)
         {
             ClipModel = mtmdWeights;
         }
@@ -528,7 +528,7 @@ namespace LLama
                 {
                     break;
                 }
-                
+
                 args.LastOutput = string.Empty;
                 await InferInternal(inferenceParams, args, cancellationToken);
 
@@ -582,7 +582,7 @@ namespace LLama
             await InferInternal(inferenceParams, args, cancellationToken);
             // Second run puts it through decode
             await InferInternal(inferenceParams, args, cancellationToken);
-        }   
+        }
 
         /// <summary>
         /// Mutable state passed between inference callbacks during a single generation pass.
